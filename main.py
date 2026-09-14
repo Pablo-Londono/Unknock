@@ -1,31 +1,33 @@
 import json
 import os
 import flet as ft
+
 from dashboard.config.views_config import get_config_view
+from dashboard.views_courses import get_course_view
 from dashboard.views_dashboard import get_dashboard_view
 from user_sign.views_login import get_login_view
 from user_sign.views_register import get_register_view
 
+# --- PALETAS DE COLOR ---
+# Tema Claro
+LIGHT_PRIMARY = ft.Colors.GREEN_700
+LIGHT_SECONDARY = ft.Colors.GREEN_200
+LIGHT_BACKGROUND = ft.Colors.GREEN_50
+LIGHT_SURFACE = ft.Colors.WHITE
+LIGHT_TEXT = ft.Colors.GREEN_900
 
-# PALETA CLARA ORIGINAL (Verde Esmeralda)
-LIGHT_PRIMARY = ft.Colors.GREEN_700  # Verde esmeralda principal
-LIGHT_SECONDARY = ft.Colors.GREEN_200  # Verde suave para acentos
-LIGHT_SURFACE = ft.Colors.WHITE  # Blanco para tarjetas
-LIGHT_TEXT = ft.Colors.GREEN_900  # Verde oscuro para texto
+# Tema Oscuro
+DARK_PRIMARY = ft.Colors.GREEN_400
+DARK_SECONDARY = ft.Colors.GREEN_800
+DARK_BACKGROUND = ft.Colors.GREY_900
+DARK_SURFACE = ft.Colors.GREY_800  # Corregido: GREY_800 en lugar de GREY_850
+DARK_TEXT = ft.Colors.GREEN_100
 
-# PALETA OSCURA (Verde Menta Nocturno)
-DARK_PRIMARY = ft.Colors.GREEN_400  # Verde brillante para elementos activos
-DARK_SECONDARY = ft.Colors.GREEN_800  # Verde bosque oscuro para bordes y acentos
-DARK_SURFACE = ft.Colors.GREY_900  # Tarjetas y fondos oscuros
-DARK_TEXT = ft.Colors.GREEN_100  # Texto verde claro legible
-
-# Rutas de archivos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, "local.json")
 
 
-def get_app_theme():
-    """Retorna el tema Claro original en tonos verdes"""
+def get_light_theme():
     return ft.Theme(
         color_scheme=ft.ColorScheme(
             primary=LIGHT_PRIMARY,
@@ -38,8 +40,7 @@ def get_app_theme():
     )
 
 
-def get_app_dark_theme():
-    """Retorna el tema Oscuro en tonos verdes nocturnos"""
+def get_dark_theme():
     return ft.Theme(
         color_scheme=ft.ColorScheme(
             primary=DARK_PRIMARY,
@@ -52,53 +53,25 @@ def get_app_dark_theme():
     )
 
 
-# --- Gestión de Sesión y Configuración Local ---
-def load_config():
+def load_session():
     if os.path.exists(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                return data.get("session")
         except (json.JSONDecodeError, FileNotFoundError):
-            return {}
-    return {}
-
-
-def save_config(data):
-    try:
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4)
-    except Exception as e:
-        print(f"Error escribiendo en local.json: {e}")
-        try:
-            with open(CONFIG_PATH, "w+", encoding="utf-8") as f:
-                json.dump(data, f, indent=4)
-        except Exception as retry_error:
-            print(f"No se pudo crear local.json: {retry_error}")
-
-
-def load_session():
-    config = load_config()
-    return config.get("session")
+            return None
+    return None
 
 
 def save_session(user_info):
-    config = load_config()
-    config["session"] = user_info
-    save_config(config)
+    try:
+        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            json.dump({"session": user_info}, f, indent=4)
+    except Exception as e:
+        print(f"Error al escribir local.json: {e}")
 
 
-def save_theme_preference(mode_str):
-    config = load_config()
-    config["theme_mode"] = mode_str
-    save_config(config)
-
-
-def load_theme_preference():
-    config = load_config()
-    return config.get("theme_mode", "light")
-
-
-# --- Main ---
 def main(page: ft.Page):
     page.title = "CBC APP Test_1"
     page.window.width = 380
@@ -109,18 +82,18 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.padding = 20
 
-    # Inyección de temas verde claro y verde oscuro
-    page.theme = get_app_theme()
-    page.dark_theme = get_app_dark_theme()
-
-    # Recuperación de estado guardado en local.json
-    saved_theme = load_theme_preference()
-    page.theme_mode = (
-        ft.ThemeMode.DARK if saved_theme == "dark" else ft.ThemeMode.LIGHT
-    )
-    page.bgcolor = None  # Transición dinámica entre fondos
+    # Configurar temas
+    page.theme = get_light_theme()
+    page.dark_theme = get_dark_theme()
+    page.theme_mode = ft.ThemeMode.DARK
 
     current_user = load_session()
+
+    def toggle_theme_mode(is_dark: bool):
+        page.theme_mode = ft.ThemeMode.DARK if is_dark else ft.ThemeMode.LIGHT
+        page.update()
+
+    # --- RUTAS DE NAVEGACIÓN ---
 
     def show_login_view():
         save_session(None)
@@ -152,6 +125,7 @@ def main(page: ft.Page):
                 page,
                 current_user=current_user,
                 go_to_config=show_config_view,
+                go_to_course=show_course_view,
             )
         )
         page.update()
@@ -163,7 +137,20 @@ def main(page: ft.Page):
                 page,
                 go_to_dashboard=show_dashboard_view,
                 on_logout=show_login_view,
-                on_theme_changed=save_theme_preference,
+                toggle_theme=toggle_theme_mode,
+            )
+        )
+        page.update()
+
+    def show_course_view(course_id="c1"):
+        page.controls.clear()
+        page.add(
+            get_course_view(
+                page,
+                current_user=current_user,
+                go_to_config=show_config_view,
+                go_to_dashboard=show_dashboard_view,
+                course_id=course_id,
             )
         )
         page.update()
@@ -175,4 +162,9 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.run(main)
+    # Pasa 'main' como primer argumento posicional directo
+    ft.run(
+        main,
+        port=8550,
+        view=ft.AppView.FLET_APP
+    )

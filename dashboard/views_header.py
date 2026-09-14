@@ -1,13 +1,11 @@
 import os
 import flet as ft
 
-# Ruta al directorio de fotos
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PHOTOS_DIR = os.path.join(BASE_DIR, "user_sign", "photos")
 
 
 def get_user_photo_path(user_id):
-    """Busca si existe foto para el ID en formato .png o .jpg"""
     if not user_id:
         return None
 
@@ -18,8 +16,7 @@ def get_user_photo_path(user_id):
     return None
 
 
-def get_dashboard_view(page: ft.Page, current_user, go_to_config):
-    # Botón de configuración (tuerca)
+def get_top_header(page: ft.Page, current_user, go_to_config):
     settings_button = ft.IconButton(
         icon=ft.Icons.SETTINGS,
         icon_size=18,
@@ -27,13 +24,12 @@ def get_dashboard_view(page: ft.Page, current_user, go_to_config):
         on_click=lambda _: go_to_config(),
     )
 
-    # Comprobar si existe foto de perfil para el ID del usuario
-    user_id = current_user.get("id", "")
+    user_id = current_user.get("id", "") if current_user else ""
     photo_path = get_user_photo_path(user_id)
 
     if photo_path:
         avatar_content = ft.CircleAvatar(
-            foreground_image_src=photo_path,  # Propiedad corregida
+            foreground_image_src=photo_path,
             radius=14,
         )
     else:
@@ -45,13 +41,12 @@ def get_dashboard_view(page: ft.Page, current_user, go_to_config):
             radius=14,
         )
 
-    # Tarjeta con foto de perfil y nombre de usuario
     user_card = ft.Container(
         content=ft.Row(
             [
                 avatar_content,
                 ft.Text(
-                    current_user.get("user", "Usuario"),
+                    current_user.get("user", "Usuario") if current_user else "Usuario",
                     size=12,
                     weight=ft.FontWeight.NORMAL,
                 ),
@@ -64,7 +59,6 @@ def get_dashboard_view(page: ft.Page, current_user, go_to_config):
         border_radius=6,
     )
 
-    # Encabezado superior
     user_header = ft.Row(
         [
             user_card,
@@ -74,14 +68,7 @@ def get_dashboard_view(page: ft.Page, current_user, go_to_config):
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
-    return ft.Column(
-        [
-            user_header,
-            ft.Divider(height=10, thickness=1),
-            ft.Text("Tus cursos", size=14, weight=ft.FontWeight.BOLD),
-        ],
-        alignment=ft.MainAxisAlignment.START,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        spacing=12,
-        expand=True,
+    return ft.Container(
+        content=user_header,
+        padding=ft.Padding(left=0, top=35, right=0, bottom=0)
     )
