@@ -1,78 +1,96 @@
 import json
 import os
+import sqlite3 as sq
 import flet as ft
-
-from dashboard.config.views_config import get_config_view
-from dashboard.views_courses import get_course_view
+from config.views_config import get_config_view
 from dashboard.views_dashboard import get_dashboard_view
+from views_courses import get_course_view
 from user_sign.views_login import get_login_view
 from user_sign.views_register import get_register_view
 
-# --- PALETAS DE COLOR ---
-# Tema Claro
-LIGHT_PRIMARY = ft.Colors.GREEN_700
-LIGHT_SECONDARY = ft.Colors.GREEN_200
-LIGHT_BACKGROUND = ft.Colors.GREEN_50
-LIGHT_SURFACE = ft.Colors.WHITE
-LIGHT_TEXT = ft.Colors.GREEN_900
+# Paleta de colores para el Tema Claro (Verdosos)
+PRIMARY_COLOR = ft.Colors.GREEN_700
+SECONDARY_COLOR = ft.Colors.GREEN_200
+SURFACE_COLOR = ft.Colors.WHITE
+TEXT_COLOR = ft.Colors.GREEN_900
 
-# Tema Oscuro
-DARK_PRIMARY = ft.Colors.GREEN_400
-DARK_SECONDARY = ft.Colors.GREEN_800
-DARK_BACKGROUND = ft.Colors.GREY_900
-DARK_SURFACE = ft.Colors.GREY_800  # Corregido: GREY_800 en lugar de GREY_850
-DARK_TEXT = ft.Colors.GREEN_100
+# Paleta de colores para el Tema Oscuro (Tonos oscuros con acentos verdes)
+DARK_PRIMARY_COLOR = ft.Colors.GREEN_400
+DARK_SECONDARY_COLOR = ft.Colors.GREEN_800
+DARK_SURFACE_COLOR = ft.Colors.GREY_900
+DARK_TEXT_COLOR = ft.Colors.GREEN_100
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, "local.json")
+# users.db se encuentra dentro del subdirectorio user_sign/
+DB_PATH = os.path.join(BASE_DIR, "user_sign", "users.db")
 
 
-def get_light_theme():
+def init_db():
+    """Inicializa la base de datos users.db dentro de user_sign/ con los 4 campos"""
+    conn = sq.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+                                             id TEXT PRIMARY KEY,
+                                             email TEXT,
+                                             username TEXT,
+                                             password TEXT
+        )
+        """
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_app_theme():
     return ft.Theme(
         color_scheme=ft.ColorScheme(
-            primary=LIGHT_PRIMARY,
-            secondary=LIGHT_SECONDARY,
-            surface=LIGHT_SURFACE,
+            primary=PRIMARY_COLOR,
+            secondary=SECONDARY_COLOR,
+            surface=SURFACE_COLOR,
         ),
         text_theme=ft.TextTheme(
-            body_medium=ft.TextStyle(color=LIGHT_TEXT),
+            body_medium=ft.TextStyle(color=TEXT_COLOR),
         ),
     )
 
 
-def get_dark_theme():
+def get_app_dark_theme():
     return ft.Theme(
         color_scheme=ft.ColorScheme(
-            primary=DARK_PRIMARY,
-            secondary=DARK_SECONDARY,
-            surface=DARK_SURFACE,
+            primary=DARK_PRIMARY_COLOR,
+            secondary=DARK_SECONDARY_COLOR,
+            surface=DARK_SURFACE_COLOR,
         ),
         text_theme=ft.TextTheme(
-            body_medium=ft.TextStyle(color=DARK_TEXT),
+            body_medium=ft.TextStyle(color=DARK_TEXT_COLOR),
         ),
     )
 
 
-def load_session():
+def load_config():
     if os.path.exists(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("session")
+                return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError):
-            return None
-    return None
+            return {}
+    return {}
 
 
-def save_session(user_info):
+def save_config(data):
     try:
         with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-            json.dump({"session": user_info}, f, indent=4)
+            json.dump(data, f, indent=4)
     except Exception as e:
-        print(f"Error al escribir local.json: {e}")
+        print("Error al escribir local.json: {}".format(e))
 
 
 def main(page: ft.Page):
+    init_db()
+
     page.title = "CBC APP Test_1"
     page.window.width = 380
     page.window.height = 700
@@ -82,21 +100,35 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.padding = 20
 
-    # Configurar temas
-    page.theme = get_light_theme()
-    page.dark_theme = get_dark_theme()
-    page.theme_mode = ft.ThemeMode.DARK
+    # Cargar configuración guardada
+    config_data = load_config()
+    current_user = config_data.get("session")
 
-    current_user = load_session()
+    saved_theme = config_data.get("theme_mode", "light")
+    page.theme_mode = (
+        ft.ThemeMode.DARK if saved_theme == "dark" else ft.ThemeMode.LIGHT
+    )
 
-    def toggle_theme_mode(is_dark: bool):
-        page.theme_mode = ft.ThemeMode.DARK if is_dark else ft.ThemeMode.LIGHT
+    page.theme = get_app_theme()
+    page.dark_theme = get_app_dark_theme()
+
+    def toggle_theme_mode(e):
+        if page.theme_mode == ft.ThemeMode.LIGHT:
+            page.theme_mode = ft.ThemeMode.DARK
+            new_theme_str = "dark"
+        else:
+            page.theme_mode = ft.ThemeMode.LIGHT
+            new_theme_str = "light"
+
+        cfg = load_config()
+        cfg["theme_mode"] = new_theme_str
+        save_config(cfg)
         page.update()
 
-    # --- RUTAS DE NAVEGACIÓN ---
-
     def show_login_view():
-        save_session(None)
+        cfg = load_config()
+        cfg["session"] = None
+        save_config(cfg)
         page.controls.clear()
         page.add(
             get_login_view(
@@ -115,7 +147,9 @@ def main(page: ft.Page):
     def on_login_success(user_info):
         nonlocal current_user
         current_user = user_info
-        save_session(user_info)
+        cfg = load_config()
+        cfg["session"] = user_info
+        save_config(cfg)
         show_dashboard_view()
 
     def show_dashboard_view():
@@ -162,9 +196,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    # Pasa 'main' como primer argumento posicional directo
-    ft.run(
-        main,
-        port=8550,
-        view=ft.AppView.FLET_APP
-    )
+    ft.run(main)

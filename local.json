@@ -1,9 +1,4 @@
 {
-    "session": {
-        "id": "a61cd511-ebf3-4e3b-a0ae-dfe15a0e5a72",
-        "user": "Pablo Londono",
-        "email": "correo44412@gmail.com",
-        "password": "ploplo1234"
-    },
+    "session": null,
     "theme_mode": "dark"
 }

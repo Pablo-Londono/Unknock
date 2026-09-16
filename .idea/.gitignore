@@ -8,3 +8,16 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+
+# Ignorar archivo de configuración local y sesiones
+local.json
+
+# Ignorar la base de datos SQLite dentro del subdirectorio user_sign
+user_sign/users.db
+
+# Ignora Fotos dentro de user sign
+user_sign/photos/
+
+# Si tienes una carpeta específica donde se guardan las fotos de perfil de los usuarios, ignórala también:
+# (Reemplaza 'ruta/a/fotos/' por la carpeta real donde se almacenen las imágenes)
+# ruta/a/fotos/
