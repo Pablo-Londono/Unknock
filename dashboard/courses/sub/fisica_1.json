@@ -1,0 +1,20 @@
+{
+  "c1": {
+    "title": "Curso 1: Introducción a la Fisica",
+    "description": "Aprende las bases fundamentales de las ciencias fisicas.",
+    "theme_color": "green",
+    "lessons": [
+      {"id": "l1", "title": "Que es el Movimiento?", "type": "video", "locked": false},
+      {"id": "l2", "title": "Movimiento Acelerado", "type": "quiz", "locked": true}
+    ]
+  },
+  "c2": {
+    "title": "Curso 2: Estructuras de Datos",
+    "description": "Domina listas, diccionarios y colecciones avanzadas.",
+    "theme_color": "blue",
+    "lessons": [
+      {"id": "l1", "title": "Lección 1: Listas y Tuplas", "type": "text", "locked": false},
+      {"id": "l1", "title": "Lección 2: Bases", "type": "text", "locked": true}
+    ]
+  }
+}
