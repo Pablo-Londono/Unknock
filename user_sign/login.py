@@ -54,4 +54,3 @@ def get_login_view(page: ft.Page, go_to_register, on_login_success):
         login,
         go_to_register,
     )
-#
