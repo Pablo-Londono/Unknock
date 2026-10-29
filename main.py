@@ -95,16 +95,16 @@ def save_theme_preference(mode_str):
 def validate_session_with_server():
     """Valida automáticamente con el servidor si el ID y el correo de la sesión coinciden en la BD."""
     session = load_session()
-    
+
     if not session or not isinstance(session, dict):
         return None
-    
+
     user_id = session.get("id")
     email = session.get("email")
-    
+
     if not user_id or not email:
         return None
-        
+
     try:
         url = f"{IP_GLOBAL}/verify"
         response = requests.post(
@@ -113,12 +113,12 @@ def validate_session_with_server():
             timeout=4
         )
         data = response.json()
-        
+
         if response.status_code == 200 and data.get("success"):
             return data.get("user")
     except Exception as e:
         print(f"No se pudo conectar con el servidor para validar la sesión: {e}")
-        
+
     return None
 
 
@@ -130,7 +130,7 @@ def main(page: ft.Page):
     page.window.resizable = True
     page.window.maximizable = False
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.vertical_alignment = ft.CrossAxisAlignment.CENTER
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.padding = 20
 
     # Configurar temas
@@ -154,38 +154,38 @@ def main(page: ft.Page):
     def show_login_view():
         save_session(None)
         page.views.clear()
-        
+
         login_content = get_login_view(
             page,
             go_to_register=lambda _: show_register_view(),
             on_login_success=on_login_success,
         )
-        
+
         view = login_content if isinstance(login_content, ft.View) else ft.View(
             route="/login",
             controls=[login_content],
             vertical_alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
-        
+
         page.views.append(view)
         page.update()
 
     def show_register_view(e=None):
         page.views.clear()
-        
+
         register_content = get_register_view(
-            page, 
+            page,
             go_to_login=lambda _: show_login_view()
         )
-        
+
         view = register_content if isinstance(register_content, ft.View) else ft.View(
             route="/register",
             controls=[register_content],
             vertical_alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
-        
+
         page.views.append(view)
         page.update()
 
@@ -197,47 +197,47 @@ def main(page: ft.Page):
 
     def show_dashboard_view(e=None):
         page.views.clear()
-        
+
         dashboard_content = get_dashboard_view(
             page,
             current_user=current_user,
             go_to_config=show_config_view,
             go_to_course=show_course_view,
         )
-        
+
         view = dashboard_content if isinstance(dashboard_content, ft.View) else ft.View(
             route="/dashboard",
             controls=[dashboard_content],
             vertical_alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
-        
+
         page.views.append(view)
         page.update()
 
     def show_config_view(e=None):
         page.views.clear()
-        
+
         config_content = get_config_view(
             page,
             go_to_dashboard=show_dashboard_view,
             on_logout=show_login_view,
             toggle_theme=toggle_theme_mode,
         )
-        
+
         view = config_content if isinstance(config_content, ft.View) else ft.View(
             route="/config",
             controls=[config_content],
             vertical_alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
-        
+
         page.views.append(view)
         page.update()
 
     def show_course_view(course_id="c1"):
         page.views.clear()
-        
+
         course_content = get_course_view(
             page,
             current_user=current_user,
@@ -245,14 +245,14 @@ def main(page: ft.Page):
             go_to_dashboard=show_dashboard_view,
             course_id=course_id,
         )
-        
+
         view = course_content if isinstance(course_content, ft.View) else ft.View(
             route="/course",
             controls=[course_content],
             vertical_alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
-        
+
         page.views.append(view)
         page.update()
 
