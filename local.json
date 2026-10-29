@@ -1,4 +1,8 @@
 {
-    "session": null,
+    "session": {
+        "email": "pablolonsim@gmail.com",
+        "id": "55368499-adce-491d-b5c2-9a3dda8aca4e",
+        "user": "Pablo"
+    },
     "theme_mode": "dark"
 }

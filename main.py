@@ -1,71 +1,53 @@
 import json
 import os
-import sqlite3 as sq
 import flet as ft
-from config.views_config import get_config_view
+import requests
+from config import IP_GLOBAL
+from dashboard.config.views_config import get_config_view
+from dashboard.views_courses import get_course_view
 from dashboard.views_dashboard import get_dashboard_view
-from views_courses import get_course_view
-from user_sign.views_login import get_login_view
-from user_sign.views_register import get_register_view
-
-# Paleta de colores para el Tema Claro (Verdosos)
-PRIMARY_COLOR = ft.Colors.GREEN_700
-SECONDARY_COLOR = ft.Colors.GREEN_200
-SURFACE_COLOR = ft.Colors.WHITE
-TEXT_COLOR = ft.Colors.GREEN_900
-
-# Paleta de colores para el Tema Oscuro (Tonos oscuros con acentos verdes)
-DARK_PRIMARY_COLOR = ft.Colors.GREEN_400
-DARK_SECONDARY_COLOR = ft.Colors.GREEN_800
-DARK_SURFACE_COLOR = ft.Colors.GREY_900
-DARK_TEXT_COLOR = ft.Colors.GREEN_100
+from user_sign.login import get_login_view
+from user_sign.register import get_register_view
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, "local.json")
-# users.db se encuentra dentro del subdirectorio user_sign/
-DB_PATH = os.path.join(BASE_DIR, "user_sign", "users.db")
 
+# ==========================================
+# PALETAS DE COLOR PERSONALIZADAS
+# ==========================================
+# Tema Claro: Blanco y Azul
+LIGHT_PRIMARY = ft.Colors.BLUE_700
+LIGHT_SECONDARY = ft.Colors.BLUE_200
+LIGHT_SURFACE = ft.Colors.WHITE
+LIGHT_TEXT = ft.Colors.BLUE_900
 
-def init_db():
-    """Inicializa la base de datos users.db dentro de user_sign/ con los 4 campos"""
-    conn = sq.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-                                             id TEXT PRIMARY KEY,
-                                             email TEXT,
-                                             username TEXT,
-                                             password TEXT
-        )
-        """
-    )
-    conn.commit()
-    conn.close()
+# Tema Oscuro: Verde y Negro
+DARK_PRIMARY = ft.Colors.GREEN_400
+DARK_SECONDARY = ft.Colors.GREEN_800
+DARK_SURFACE = ft.Colors.GREY_900
+DARK_TEXT = ft.Colors.GREEN_100
 
-
-def get_app_theme():
+def get_light_theme():
     return ft.Theme(
         color_scheme=ft.ColorScheme(
-            primary=PRIMARY_COLOR,
-            secondary=SECONDARY_COLOR,
-            surface=SURFACE_COLOR,
+            primary=LIGHT_PRIMARY,
+            secondary=LIGHT_SECONDARY,
+            surface=LIGHT_SURFACE,
         ),
         text_theme=ft.TextTheme(
-            body_medium=ft.TextStyle(color=TEXT_COLOR),
+            body_medium=ft.TextStyle(color=LIGHT_TEXT),
         ),
     )
 
-
-def get_app_dark_theme():
+def get_dark_theme():
     return ft.Theme(
         color_scheme=ft.ColorScheme(
-            primary=DARK_PRIMARY_COLOR,
-            secondary=DARK_SECONDARY_COLOR,
-            surface=DARK_SURFACE_COLOR,
+            primary=DARK_PRIMARY,
+            secondary=DARK_SECONDARY,
+            surface=DARK_SURFACE,
         ),
         text_theme=ft.TextTheme(
-            body_medium=ft.TextStyle(color=DARK_TEXT_COLOR),
+            body_medium=ft.TextStyle(color=DARK_TEXT),
         ),
     )
 
@@ -85,113 +67,199 @@ def save_config(data):
         with open(CONFIG_PATH, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
     except Exception as e:
-        print("Error al escribir local.json: {}".format(e))
+        print(f"Error al escribir en local.json: {e}")
 
 
+def load_session():
+    config = load_config()
+    return config.get("session")
+
+
+def save_session(user_info):
+    config = load_config()
+    config["session"] = user_info
+    save_config(config)
+
+
+def load_theme_preference():
+    config = load_config()
+    return config.get("theme_mode", "light")
+
+
+def save_theme_preference(mode_str):
+    config = load_config()
+    config["theme_mode"] = mode_str
+    save_config(config)
+
+
+def validate_session_with_server():
+    """Valida automáticamente con el servidor si el ID y el correo de la sesión coinciden en la BD."""
+    session = load_session()
+    
+    if not session or not isinstance(session, dict):
+        return None
+    
+    user_id = session.get("id")
+    email = session.get("email")
+    
+    if not user_id or not email:
+        return None
+        
+    try:
+        url = f"{IP_GLOBAL}/verify"
+        response = requests.post(
+            url,
+            json={"id": user_id, "email": email},
+            timeout=4
+        )
+        data = response.json()
+        
+        if response.status_code == 200 and data.get("success"):
+            return data.get("user")
+    except Exception as e:
+        print(f"No se pudo conectar con el servidor para validar la sesión: {e}")
+        
+    return None
+
+
+# --- Main ---
 def main(page: ft.Page):
-    init_db()
-
     page.title = "CBC APP Test_1"
     page.window.width = 380
     page.window.height = 700
-    page.window.resizable = False
+    page.window.resizable = True
     page.window.maximizable = False
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.vertical_alignment = ft.CrossAxisAlignment.CENTER
     page.padding = 20
 
-    # Cargar configuración guardada
-    config_data = load_config()
-    current_user = config_data.get("session")
+    # Configurar temas
+    page.theme = get_light_theme()
+    page.dark_theme = get_dark_theme()
 
-    saved_theme = config_data.get("theme_mode", "light")
+    saved_theme = load_theme_preference()
     page.theme_mode = (
         ft.ThemeMode.DARK if saved_theme == "dark" else ft.ThemeMode.LIGHT
     )
 
-    page.theme = get_app_theme()
-    page.dark_theme = get_app_dark_theme()
+    # Validamos estrictamente la sesión con el servidor al iniciar
+    current_user = validate_session_with_server()
 
-    def toggle_theme_mode(e):
-        if page.theme_mode == ft.ThemeMode.LIGHT:
-            page.theme_mode = ft.ThemeMode.DARK
-            new_theme_str = "dark"
-        else:
-            page.theme_mode = ft.ThemeMode.LIGHT
-            new_theme_str = "light"
-
-        cfg = load_config()
-        cfg["theme_mode"] = new_theme_str
-        save_config(cfg)
+    def toggle_theme_mode(is_dark: bool):
+        page.theme_mode = ft.ThemeMode.DARK if is_dark else ft.ThemeMode.LIGHT
+        save_theme_preference("dark" if is_dark else "light")
         page.update()
 
+    # --- RUTAS DE NAVEGACIÓN USANDO ft.View ---
     def show_login_view():
-        cfg = load_config()
-        cfg["session"] = None
-        save_config(cfg)
-        page.controls.clear()
-        page.add(
-            get_login_view(
-                page,
-                go_to_register=show_register_view,
-                on_login_success=on_login_success,
-            )
+        save_session(None)
+        page.views.clear()
+        
+        login_content = get_login_view(
+            page,
+            go_to_register=lambda _: show_register_view(),
+            on_login_success=on_login_success,
         )
+        
+        view = login_content if isinstance(login_content, ft.View) else ft.View(
+            route="/login",
+            controls=[login_content],
+            vertical_alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+        
+        page.views.append(view)
         page.update()
 
-    def show_register_view():
-        page.controls.clear()
-        page.add(get_register_view(page, go_to_login=show_login_view))
+    def show_register_view(e=None):
+        page.views.clear()
+        
+        register_content = get_register_view(
+            page, 
+            go_to_login=lambda _: show_login_view()
+        )
+        
+        view = register_content if isinstance(register_content, ft.View) else ft.View(
+            route="/register",
+            controls=[register_content],
+            vertical_alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+        
+        page.views.append(view)
         page.update()
 
     def on_login_success(user_info):
         nonlocal current_user
         current_user = user_info
-        cfg = load_config()
-        cfg["session"] = user_info
-        save_config(cfg)
+        save_session(user_info)
         show_dashboard_view()
 
-    def show_dashboard_view():
-        page.controls.clear()
-        page.add(
-            get_dashboard_view(
-                page,
-                current_user=current_user,
-                go_to_config=show_config_view,
-                go_to_course=show_course_view,
-            )
+    def show_dashboard_view(e=None):
+        page.views.clear()
+        
+        dashboard_content = get_dashboard_view(
+            page,
+            current_user=current_user,
+            go_to_config=show_config_view,
+            go_to_course=show_course_view,
         )
+        
+        view = dashboard_content if isinstance(dashboard_content, ft.View) else ft.View(
+            route="/dashboard",
+            controls=[dashboard_content],
+            vertical_alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+        
+        page.views.append(view)
         page.update()
 
-    def show_config_view():
-        page.controls.clear()
-        page.add(
-            get_config_view(
-                page,
-                go_to_dashboard=show_dashboard_view,
-                on_logout=show_login_view,
-                toggle_theme=toggle_theme_mode,
-            )
+    def show_config_view(e=None):
+        page.views.clear()
+        
+        config_content = get_config_view(
+            page,
+            go_to_dashboard=show_dashboard_view,
+            on_logout=show_login_view,
+            toggle_theme=toggle_theme_mode,
         )
+        
+        view = config_content if isinstance(config_content, ft.View) else ft.View(
+            route="/config",
+            controls=[config_content],
+            vertical_alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+        
+        page.views.append(view)
         page.update()
 
     def show_course_view(course_id="c1"):
-        page.controls.clear()
-        page.add(
-            get_course_view(
-                page,
-                current_user=current_user,
-                go_to_config=show_config_view,
-                go_to_dashboard=show_dashboard_view,
-                course_id=course_id,
-            )
+        page.views.clear()
+        
+        course_content = get_course_view(
+            page,
+            current_user=current_user,
+            go_to_config=show_config_view,
+            go_to_dashboard=show_dashboard_view,
+            course_id=course_id,
         )
+        
+        view = course_content if isinstance(course_content, ft.View) else ft.View(
+            route="/course",
+            controls=[course_content],
+            vertical_alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+        
+        page.views.append(view)
         page.update()
 
     if current_user:
         show_dashboard_view()
     else:
+        save_session(None)
         show_login_view()
 
 
