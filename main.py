@@ -29,25 +29,31 @@ DARK_TEXT = ft.Colors.GREEN_100
 
 def get_light_theme():
     return ft.Theme(
+        font_family="Syne",
         color_scheme=ft.ColorScheme(
             primary=LIGHT_PRIMARY,
             secondary=LIGHT_SECONDARY,
             surface=LIGHT_SURFACE,
         ),
         text_theme=ft.TextTheme(
-            body_medium=ft.TextStyle(color=LIGHT_TEXT),
+            body_medium=ft.TextStyle(color=LIGHT_TEXT, font_family="Syne", size=16),
+            headline_large=ft.TextStyle(font_family="SyneBold", weight=ft.FontWeight.BOLD, size=26),
+            title_medium=ft.TextStyle(font_family="SyneBold", weight=ft.FontWeight.BOLD, size=18),
         ),
     )
 
 def get_dark_theme():
     return ft.Theme(
+        font_family="Syne",
         color_scheme=ft.ColorScheme(
             primary=DARK_PRIMARY,
             secondary=DARK_SECONDARY,
             surface=DARK_SURFACE,
         ),
         text_theme=ft.TextTheme(
-            body_medium=ft.TextStyle(color=DARK_TEXT),
+            body_medium=ft.TextStyle(color=DARK_TEXT, font_family="Syne", size=16),
+            headline_large=ft.TextStyle(font_family="SyneBold", weight=ft.FontWeight.BOLD, size=26),
+            title_medium=ft.TextStyle(font_family="SyneBold", weight=ft.FontWeight.BOLD, size=18),
         ),
     )
 
@@ -130,8 +136,14 @@ def main(page: ft.Page):
     page.window.resizable = True
     page.window.maximizable = False
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.vertical_alignment = ft.CrossAxisAlignment.CENTER
     page.padding = 20
+
+    # 1. Registrar las fuentes personalizadas desde la carpeta assets (resources)
+    page.fonts = {
+        "Syne": "font/syne/static/Syne-Regular.ttf",
+        "SyneBold": "font/syne/static/Syne-Bold.ttf",
+    }
 
     # Configurar temas
     page.theme = get_light_theme()
@@ -264,4 +276,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.run(main)
+    ft.run(main, assets_dir="resources")

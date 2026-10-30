@@ -14,3 +14,4 @@ Se asume que se aceptan los terminos y condiciones al descarcar, modificar o eje
 
 © 2026 Grupo Glup
 © 2026 Pablo Londoño Simon
+

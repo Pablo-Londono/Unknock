@@ -1,9 +1,4 @@
-import os
 import flet as ft
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Usamos asposix para estandarizar las barras de la ruta en Windows/Linux/Mac
-GIF_PATH = os.path.abspath(os.path.join(os.path.dirname(BASE_DIR), "resources", "dih_fish.gif")).replace("\\", "/")
 
 class LoadingOverlay:
     def __init__(self, page: ft.Page):
@@ -19,23 +14,26 @@ class LoadingOverlay:
             content=ft.Column(
                 [
                     ft.Image(
-                        src=GIF_PATH,
-                        width=80,
-                        height=80,
+                        src="resources/dih_fish.gif",
+                        width=105,
+                        height=105,
                         fit="contain",
-                        repeat=ft.ImageRepeat.NO_REPEAT,
                     ),
                     self.status_text
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=15,
+                width=380,  # Coincide con el ancho de la ventana para un centrado perfecto sin fallos
+                expand=True,
             ),
-            bgcolor=ft.Colors.with_opacity(0.35, ft.Colors.BLACK),
-            alignment="center",
+            bgcolor=ft.Colors.with_opacity(0.8, ft.Colors.BLACK),
             visible=False,
             expand=True,
         )
+
+        # Limpiamos overlays previos para evitar acumulación al cerrar/abrir sesión
+        self.page.overlay[:] = [o for o in self.page.overlay if o != self.overlay]
 
         if self.overlay not in self.page.overlay:
             self.page.overlay.append(self.overlay)

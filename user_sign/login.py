@@ -4,6 +4,7 @@ from config import IP_GLOBAL
 from components.loading_overlay import LoadingOverlay
 
 def get_login_view(page: ft.Page, go_to_register, on_login_success):
+    # Instanciamos el overlay pasándole la página
     loading_overlay = LoadingOverlay(page)
 
     email_input = ft.TextField(
@@ -13,9 +14,9 @@ def get_login_view(page: ft.Page, go_to_register, on_login_success):
         autofocus=True,
     )
     password_input = ft.TextField(
-        label="Password", 
-        password=True, 
-        can_reveal_password=True, 
+        label="Password",
+        password=True,
+        can_reveal_password=True,
         width=280
     )
     status_message = ft.Text(value="", color=ft.Colors.RED, size=12)
@@ -27,6 +28,9 @@ def get_login_view(page: ft.Page, go_to_register, on_login_success):
             page.update()
             return
 
+        # ==========================================
+        # AQUÍ SE MUESTRA EL OVERLAY DE CARGA
+        # ==========================================
         loading_overlay.show("Connecting to server...")
         status_message.value = ""
 
@@ -40,6 +44,9 @@ def get_login_view(page: ft.Page, go_to_register, on_login_success):
                 )
                 data = response.json()
 
+                # ==========================================
+                # OCULTAMOS EL OVERLAY AL RECIBIR RESPUESTA
+                # ==========================================
                 loading_overlay.hide()
 
                 if response.status_code == 200 and data.get("success"):
@@ -72,8 +79,8 @@ def get_login_view(page: ft.Page, go_to_register, on_login_success):
         page.run_task(background_login)
 
     login_button = ft.Button(
-        content="Login", 
-        on_click=login, 
+        content="Login",
+        on_click=login,
         width=280
     )
 

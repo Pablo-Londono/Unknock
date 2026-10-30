@@ -37,17 +37,21 @@ def get_course_view(page: ft.Page, current_user, go_to_config, go_to_dashboard, 
         on_click=lambda _: go_to_dashboard(),
     )
 
-    # Función para ir a la vista de la lección limpiando y reemplazando correctamente la pantalla
+    # Función para ir a la vista de la lección usando el sistema de vistas nativo de Flet
     def go_to_lesson(lesson_title):
-        page.controls.clear()
+        page.views.clear()
 
-        # Botón para volver al curso desde la lección de manera limpia
         def return_to_course(_):
-            page.controls.clear()
-            page.add(get_course_view(page, current_user, go_to_config, go_to_dashboard, course_id))
+            page.views.clear()
+            page.views.append(ft.View(
+                route="/course",
+                controls=[get_course_view(page, current_user, go_to_config, go_to_dashboard, course_id)],
+                vertical_alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ))
             page.update()
 
-        lesson_view = ft.Column(
+        lesson_content = ft.Column(
             [
                 ft.TextButton(
                     content=ft.Row(
@@ -68,7 +72,14 @@ def get_course_view(page: ft.Page, current_user, go_to_config, go_to_dashboard, 
             expand=True,
         )
 
-        page.add(lesson_view)
+        lesson_view = ft.View(
+            route="/lesson",
+            controls=[lesson_content],
+            vertical_alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+        page.views.append(lesson_view)
         page.update()
 
     # Detectar si el modo oscuro está activo para adaptar los bloques dinámicamente
