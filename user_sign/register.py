@@ -119,3 +119,4 @@ def get_register_view(page: ft.Page, go_to_login):
         vertical_alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
     )
+

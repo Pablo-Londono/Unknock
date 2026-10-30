@@ -72,3 +72,4 @@ def get_top_header(page: ft.Page, current_user, go_to_config):
         content=user_header,
         padding=ft.Padding(left=0, top=35, right=0, bottom=0)
     )
+

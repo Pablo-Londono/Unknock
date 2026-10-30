@@ -69,3 +69,4 @@ def get_dashboard_view(page: ft.Page, current_user, go_to_config, go_to_course=N
         spacing=12,
         expand=True,
     )
+

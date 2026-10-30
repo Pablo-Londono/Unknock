@@ -55,3 +55,4 @@ def get_config_view(
         spacing=20,
         expand=True,
     )
+

@@ -1,4 +1,4 @@
-version 1.1.5
+version 1.1.6
 fecha 2026-10-28.18:28
 
 Todo lo que se puede cambiar esta dentro de main, o al menos cambiar de forma segura. 
@@ -14,4 +14,3 @@ Se asume que se aceptan los terminos y condiciones al descarcar, modificar o eje
 
 © 2026 Grupo Glup
 © 2026 Pablo Londoño Simon
-
