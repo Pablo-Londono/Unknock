@@ -1,4 +1,8 @@
 {
     "theme_mode": "dark",
-    "session": null
+    "session": {
+        "email": "a@gmail.com",
+        "id": "1430eb27-ea83-4677-92a0-0aa26b4d81fb",
+        "user": "a"
+    }
 }
