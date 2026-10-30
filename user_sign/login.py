@@ -89,6 +89,12 @@ def get_login_view(page: ft.Page, go_to_register, on_login_success):
         on_click=go_to_register,
     )
 
+    imagen_url = ft.Image(
+        src="glup/green_glup.png",
+        width=220,
+        height=220,
+    )
+
     # Color de título dinámico según el modo de tema de la página
     is_dark = page.theme_mode == ft.ThemeMode.DARK
     title_color = ft.Colors.GREEN_400 if is_dark else ft.Colors.BLUE_900
@@ -98,6 +104,7 @@ def get_login_view(page: ft.Page, go_to_register, on_login_success):
         controls=[
             ft.Column(
                 [
+                    imagen_url,
                     ft.Text("Sign In", size=24, weight=ft.FontWeight.BOLD, color=title_color),
                     email_input,
                     password_input,
